@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ViralLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#09090f; --surface:#0f0f1a; --surface2:#151525;
+  --border:rgba(255,255,255,0.06); --accent:#ff3f6c; --accent2:#ff7a00;
+  --gold:#ffd166; --cyan:#06d6a0; --text:#f0eeff; --muted:#7b7a9e;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 10% 10%,rgba(255,63,108,.12) 0%,transparent 60%),
+  radial-gradient(ellipse 50% 50% at 90% 80%,rgba(6,214,160,.08) 0%,transparent 60%);}
+
+/* SCREENS */
+.screen{position:relative;display:flex;align-items:center;justify-content:center;z-index:1;transition:opacity .4s,transform .4s;min-height:100vh;}
+.screen.hidden{display:none!important;}
+
+/* ONBOARDING */
+#screen-onboarding .card{background:var(--surface);border:1px solid var(--border);border-radius:28px;padding:48px 44px 40px;width:500px;position:relative;overflow:hidden;text-align:center;}
+#screen-onboarding .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent) 30%,var(--accent2) 70%,transparent);}
+.onb-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,63,108,.12);border:1px solid rgba(255,63,108,.3);border-radius:999px;padding:6px 16px 6px 10px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:22px;}
+.onb-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.onb-title{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1.1;margin-bottom:8px;}
+.grad{background:linear-gradient(135deg,#ff3f6c 0%,#ff7a00 55%,#ffd166 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.onb-sub{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:26px;}
+.onb-steps{display:flex;flex-direction:column;gap:9px;margin-bottom:22px;text-align:left;}
+.onb-step{display:flex;align-items:flex-start;gap:11px;background:var(--surface2);border-radius:10px;padding:11px 13px;}
+.onb-num{width:22px;height:22px;border-radius:50%;background:rgba(255,63,108,.15);border:1px solid rgba(255,63,108,.3);color:var(--accent);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.onb-txt{font-size:12px;color:var(--text);line-height:1.5;}
+.onb-txt span{color:var(--muted);font-size:11px;display:block;}
+.key-wrap{position:relative;margin-bottom:8px;}
+.key-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 44px 12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+.key-inp:focus{border-color:rgba(255,63,108,.5);box-shadow:0 0 0 3px rgba(255,63,108,.08);}
+.key-inp::placeholder{color:var(--muted);opacity:.5;}
+.key-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;}
+.key-hint{font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.5;text-align:left;}
+.onb-err{color:#ff6b6b;font-size:12px;margin-bottom:10px;display:none;}
+.privacy{margin-top:14px;font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* APP */
+#screen-app{flex-direction:column;align-items:stretch;justify-content:flex-start;}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(9,9,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:52px;flex-shrink:0;}
+.topbar-brand{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:.06em;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.key-badge{font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:4px 12px;}
+.btn-signout{font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;transition:color .2s;}
+.btn-signout:hover{color:var(--accent);}
+.app-scroll{flex:1;}
+.app-container{max-width:840px;margin:0 auto;padding:28px 24px 60px;}
+
+/* HEADER */
+.app-header{text-align:center;padding:20px 0 26px;}
+.app-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,63,108,.12);border:1px solid rgba(255,63,108,.3);border-radius:999px;padding:5px 14px 5px 9px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;}
+.app-h1{font-family:'Syne',sans-serif;font-size:clamp(26px,5vw,48px);font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-bottom:10px;}
+.app-sub{color:var(--muted);font-size:14px;line-height:1.6;max-width:460px;margin:0 auto;}
+
+/* FORM CARD */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;position:relative;overflow:hidden;margin-bottom:16px;}
+.form-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent) 30%,var(--accent2) 70%,transparent);}
+.sec-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.g1{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.lbl{font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.04em;}
+input[type=text],select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237b7a9e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px;}
+select option{background:#1a1a2e;}
+textarea{resize:vertical;min-height:96px;line-height:1.55;}
+input:focus,select:focus,textarea:focus{border-color:rgba(255,63,108,.5);box-shadow:0 0 0 3px rgba(255,63,108,.08);}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.5;}
+.divider{height:1px;background:var(--border);margin:22px 0;}
+
+/* PILLS */
+.pill-group{display:flex;flex-wrap:wrap;gap:8px;}
+.pill{padding:8px 16px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.pill:hover{border-color:rgba(255,255,255,.15);color:var(--text);}
+.pill.p-yt.on{background:rgba(255,63,108,.12);border-color:rgba(255,63,108,.5);color:#ff3f6c;}
+.pill.p-tt.on{background:rgba(0,200,255,.10);border-color:rgba(0,200,255,.4);color:#00c8ff;}
+.pill.p-ig.on{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.4);color:#a78bfa;}
+.pill.o-1.on{background:rgba(255,63,108,.12);border-color:rgba(255,63,108,.5);color:#ff3f6c;}
+.pill.o-2.on{background:rgba(6,214,160,.12);border-color:rgba(6,214,160,.4);color:#06d6a0;}
+.pill.o-3.on{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.4);color:#ffd166;}
+.pill.o-4.on{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.4);color:#a78bfa;}
+.pill.o-5.on{background:rgba(255,122,0,.12);border-color:rgba(255,122,0,.4);color:#ff7a00;}
+
+/* THUMB */
+.thumb-upload{border:2px dashed var(--border);border-radius:13px;background:var(--surface2);cursor:pointer;min-height:90px;display:flex;align-items:center;justify-content:center;transition:border-color .2s;overflow:hidden;}
+.thumb-upload:hover{border-color:rgba(255,63,108,.4);}
+.thumb-upload.has-img{border-style:solid;border-color:rgba(255,63,108,.4);}
+.thumb-ph{display:flex;flex-direction:column;align-items:center;gap:7px;padding:20px;}
+.thumb-icon{width:40px;height:40px;border-radius:10px;background:rgba(255,63,108,.1);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.thumb-txt{font-size:12px;color:var(--muted);text-align:center;}
+.thumb-txt b{color:var(--accent);}
+.thumb-img{width:100%;max-height:180px;object-fit:cover;display:none;border-radius:11px;}
+.thumb-upload.has-img .thumb-ph{display:none;}
+.thumb-upload.has-img .thumb-img{display:block;}
+
+/* BUTTON */
+.btn-analyze{width:100%;padding:15px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);border:none;border-radius:11px;color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s,box-shadow .2s;box-shadow:0 4px 22px rgba(255,63,108,.35);}
+.btn-analyze:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 30px rgba(255,63,108,.45);}
+.btn-analyze:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.form-err{color:#ff6b6b;font-size:12px;margin-top:8px;text-align:center;display:none;}
+
+/* LOADING */
+.loading-wrap{text-align:center;padding:70px 20px;display:none;}
+.loading-wrap.active{display:block;}
+.loader-ring{width:56px;height:56px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);border-right-color:var(--accent2);animation:spin .9s linear infinite;margin:0 auto 18px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;}
+.loading-sub{color:var(--muted);font-size:13px;}
+
+/* RESULTS */
+.results-wrap{display:none;}
+.results-wrap.active{display:block;}
+.res-header{text-align:center;margin-bottom:22px;}
+.score-wrap{display:flex;justify-content:center;margin-bottom:14px;}
+.score-circle{position:relative;width:120px;height:120px;}
+.score-circle svg{width:120px;height:120px;transform:rotate(-90deg);}
+.score-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.score-val{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1;}
+.score-lbl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.verdict{display:inline-block;padding:6px 16px;border-radius:999px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.05em;margin-top:8px;}
+.subs{display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
+.sub-item{display:grid;grid-template-columns:80px 1fr 26px;align-items:center;gap:10px;}
+.sub-lbl{font-size:11px;color:var(--muted);text-align:right;}
+.sub-bar{height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+.sub-fill{height:100%;border-radius:99px;width:0;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.sub-num{font-size:11px;font-weight:600;text-align:right;}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.rcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;position:relative;overflow:hidden;}
+.rcard-full{grid-column:1/-1;}
+.rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.rcard-icon{font-size:18px;margin-bottom:8px;}
+.rcard h3{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;}
+.rcard-content{font-size:12px;line-height:1.7;color:#c8c7e8;}
+.rcard-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.rcard-li{display:flex;gap:7px;align-items:flex-start;}
+.rcard-arrow{flex-shrink:0;font-size:10px;margin-top:3px;opacity:.8;}
+.title-opt{background:rgba(255,209,102,.07);border:1px solid rgba(255,209,102,.15);border-radius:9px;padding:9px 12px;margin-bottom:6px;}
+.title-opt-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,209,102,.45);display:block;margin-bottom:3px;}
+.title-opt-txt{font-size:12px;color:#f0eeff;font-weight:500;line-height:1.4;}
+.title-ana{background:var(--surface2);border-radius:9px;padding:10px 12px;font-size:12px;color:#c8c7e8;line-height:1.65;margin-top:4px;}
+.schedule{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;}
+.sch-item{background:var(--surface2);border-radius:10px;padding:12px;text-align:center;}
+.sch-val{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.sch-lbl{font-size:10px;color:var(--muted);}
+.sch-reason{grid-column:1/-1;background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;color:var(--muted);line-height:1.6;}
+.desc-box{background:var(--surface2);border-radius:10px;padding:12px 14px;font-size:12px;color:#c8c7e8;line-height:1.7;white-space:pre-wrap;margin-top:8px;}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tag{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);color:#a78bfa;font-size:11px;padding:4px 10px;border-radius:999px;}
+.btn-reset{width:100%;padding:11px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px;transition:border-color .2s,color .2s;}
+.btn-reset:hover{border-color:var(--accent);color:var(--accent);}
+
+.btn-primary{width:100%;padding:16px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;box-shadow:0 4px 24px rgba(255,63,108,.35);display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 32px rgba(255,63,108,.45);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+
+@media(max-width:600px){
+  #screen-onboarding .card{width:100%;padding:32px 20px 28px;border-radius:20px;}
+  .app-container{padding:20px 16px 40px;}
+  .g2,.g3{grid-template-columns:1fr;}
+  .topbar{padding:0 16px;}
+  .app-h1{font-size:28px;}
+  .rgrid{grid-template-columns:1fr;}
+  .schedule{grid-template-columns:1fr 1fr;}
+  .onb-card{padding:32px 20px 28px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div class="screen" id="screen-onboarding">
+  <div class="card">
+    <div class="onb-badge"><span class="onb-dot"></span>ViralLab</div>
+    <div class="onb-title">Configure sua<br><span class="grad">Chave de API</span></div>
+    <p class="onb-sub">Para usar o ViralLab você precisa de uma chave gratuita da Anthropic. Ela fica salva só no seu computador.</p>
+    <div class="onb-steps">
+      <div class="onb-step"><div class="onb-num">1</div><div class="onb-txt">Acesse <b>console.anthropic.com</b> e crie sua conta gratuita<span>É rápido — só email e senha</span></div></div>
+      <div class="onb-step"><div class="onb-num">2</div><div class="onb-txt">Vá em <b>API Keys → Create Key</b> e copie a chave<span>Começa com sk-ant-...</span></div></div>
+      <div class="onb-step"><div class="onb-num">3</div><div class="onb-txt">Cole a chave abaixo e clique em Começar<span>Custo médio: menos de R$0,03 por análise</span></div></div>
+    </div>
+    <div class="lbl" style="text-align:left;margin-bottom:6px">Sua chave da API Anthropic</div>
+    <div class="key-wrap">
+      <input class="key-inp" type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="key-toggle" id="keyToggle" onclick="toggleKey()">👁</button>
+    </div>
+    <p class="key-hint">Chave salva localmente. Não é enviada para nenhum servidor além da Anthropic.</p>
+    <div class="onb-err" id="onbErr"></div>
+    <button class="btn-primary" id="btnStart" onclick="handleStart()"><span>⚡</span><span>Começar a usar o ViralLab</span></button>
+    <div class="privacy">🔒 Sua chave nunca sai do seu computador</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen hidden" id="screen-app">
+  <div style="display:flex;flex-direction:column;width:100%;height:100vh">
+    <div class="topbar">
+      <div class="topbar-brand">VIRALLAB</div>
+      <div class="topbar-right">
+        <div class="key-badge" id="keyBadge">🔑 Configurado</div>
+        <button class="btn-signout" onclick="handleSignout()">Trocar chave</button>
+      </div>
+    </div>
+    <div class="app-scroll">
+      <div class="app-container">
+
+        <div class="app-header">
+          <div class="app-badge"><span class="onb-dot"></span>ViralLab AI</div>
+          <h1 class="app-h1">Descubra o <span class="grad">Potencial Viral</span><br>do Seu Vídeo</h1>
+          <p class="app-sub">Análise inteligente de título, roteiro e thumbnail para maximizar suas views antes de publicar.</p>
+        </div>
+
+        <!-- FORM -->
+        <div class="form-card" id="formCard">
+          <div class="sec-title">Plataforma & Objetivo</div>
+
+          <div class="field" style="margin-bottom:16px">
+            <label class="lbl">Onde vai publicar?</label>
+            <div class="pill-group" id="platformGroup">
+              <button class="pill p-yt" onclick="selectPill('platform','YouTube',this)">▶ YouTube</button>
+              <button class="pill p-tt" onclick="selectPill('platform','TikTok',this)">♪ TikTok</button>
+              <button class="pill p-ig" onclick="selectPill('platform','Reels',this)">◉ Reels</button>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:20px">
+            <label class="lbl">Qual o objetivo desse vídeo?</label>
+            <div class="pill-group" id="objectiveGroup">
+              <button class="pill o-1" onclick="selectPill('objective','Viralizar',this)">🚀 Viralizar</button>
+              <button class="pill o-2" onclick="selectPill('objective','Crescer inscritos',this)">👥 Crescer inscritos</button>
+              <button class="pill o-3" onclick="selectPill('objective','Monetizar',this)">💰 Monetizar</button>
+              <button class="pill o-4" onclick="selectPill('objective','Gerar leads',this)">🎯 Gerar leads</button>
+              <button class="pill o-5" onclick="selectPill('objective','Autoridade',this)">🏆 Autoridade</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="sec-title">Sobre o Vídeo</div>
+
+          <div class="g1">
+            <div class="field">
+              <label class="lbl">Título do vídeo</label>
+              <input type="text" id="fTitle" placeholder="Ex: Como ganhar R$1000 por dia na internet em 2025">
+            </div>
+          </div>
+          <div class="g2">
+            <div class="field"><label class="lbl">Nicho do canal</label><input type="text" id="fNiche" placeholder="Ex: Finanças, fitness, tecnologia..."></div>
+            <div class="field"><label class="lbl">Público-alvo</label><input type="text" id="fAudience" placeholder="Ex: Jovens de 18-25 anos..."></div>
+          </div>
+          <div class="g3">
+            <div class="field">
+              <label class="lbl">Tamanho do canal</label>
+              <select id="fSize"><option value="">Selecione</option><option>Nano (até 1k)</option><option>Micro (1k–10k)</option><option>Pequeno (10k–50k)</option><option>Médio (50k–200k)</option><option>Grande (200k–1M)</option><option>Mega (+1M)</option></select>
+            </div>
+            <div class="field">
+              <label class="lbl">Duração estimada</label>
+              <select id="fDuration"><option value="">Selecione</option><option>Short / Reel</option><option>Curto (1–5 min)</option><option>Médio (5–15 min)</option><option>Longo (15–30 min)</option><option>Extenso (30+ min)</option></select>
+            </div>
+            <div class="field">
+              <label class="lbl">Tipo de vídeo</label>
+              <select id="fType"><option value="">Selecione</option><option>Tutorial</option><option>Review</option><option>Vlog</option><option>Lista / Top N</option><option>Storytime</option><option>Educativo</option><option>Motivacional</option><option>Entretenimento</option></select>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="sec-title">Conteúdo & Thumbnail</div>
+
+          <div class="g1">
+            <div class="field">
+              <label class="lbl">Ideia do roteiro — quanto mais detalhe, melhor a análise</label>
+              <textarea id="fScript" placeholder="Descreva o gancho inicial, os tópicos que vai abordar, exemplos que vai usar e como vai fechar o vídeo (CTA)..."></textarea>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:12px">
+            <label class="lbl">Thumbnail (opcional — mas melhora muito a análise)</label>
+            <div class="thumb-upload" id="thumbBox" onclick="document.getElementById('thumbFile').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+              <input type="file" id="thumbFile" accept="image/*" style="display:none" onchange="handleThumb(event)">
+              <div class="thumb-ph" id="thumbPh">
+                <div class="thumb-icon">🖼️</div>
+                <p class="thumb-txt"><b>Clique para enviar</b> ou arraste aqui</p>
+                <p class="thumb-txt" style="font-size:11px;opacity:.55">PNG, JPG, WEBP</p>
+              </div>
+              <img class="thumb-img" id="thumbPreview" alt="Thumbnail">
+            </div>
+          </div>
+
+          <div class="form-err" id="formErr"></div>
+          <button class="btn-analyze" id="btnAnalyze" onclick="analyze()"><span>⚡</span><span>Analisar Potencial Viral</span></button>
+        </div>
+
+        <!-- LOADING -->
+        <div class="loading-wrap" id="loadingWrap">
+          <div class="loader-ring"></div>
+          <div class="loading-title">Analisando seu vídeo...</div>
+          <div class="loading-sub" id="loadingMsg">Verificando título e algoritmo...</div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results-wrap" id="resultsWrap">
+          <div class="res-header">
+            <div class="score-wrap">
+              <div class="score-circle">
+                <svg viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="54" fill="none" stroke="var(--surface2)" stroke-width="9"/>
+                  <circle id="scoreArc" cx="60" cy="60" r="54" fill="none" stroke-width="9" stroke-linecap="round" stroke-dasharray="339" stroke-dashoffset="339" style="transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)"/>
+                </svg>
+                <div class="score-num">
+                  <span class="score-val" id="scoreVal">—</span>
+                  <span class="score-lbl">Viral Score</span>
+                </div>
+              </div>
+            </div>
+            <div id="verdictEl" class="verdict"></div>
+          </div>
+          <div class="subs" id="subsWrap"></div>
+          <div class="rgrid" id="cardsWrap"></div>
+          <button class="btn-reset" onclick="resetApp()">← Analisar outro vídeo</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let apiKey = null;
+let thumbBase64 = null;
+let thumbMediaType = 'image/jpeg';
+let platform = '';
+let objective = '';
+let loadingTimer = null;
+
+const LOADING_MSGS = ['Verificando título e algoritmo...','Analisando gancho e retenção...','Aplicando método PPP no título...','Avaliando concorrência no nicho...','Calculando melhor horário de publicação...','Gerando descrição e tags otimizadas...','Finalizando análise completa...'];
+const SUB_LABELS = {titulo:'Título',gancho:'Gancho',retencao:'Retenção',thumbnail:'Thumbnail',seo:'SEO'};
+const SUB_COLORS = {titulo:'#ff3f6c',gancho:'#ff7a00',retencao:'#ffd166',thumbnail:'#06d6a0',seo:'#a78bfa'};
+const VERDICT_STYLES = {
+  'EXPLOSIVO':        {bg:'rgba(6,214,160,.15)',border:'rgba(6,214,160,.5)',color:'#06d6a0'},
+  'MUITO BOM':        {bg:'rgba(0,180,216,.15)',border:'rgba(0,180,216,.5)',color:'#00b4d8'},
+  'BOM':              {bg:'rgba(255,209,102,.15)',border:'rgba(255,209,102,.5)',color:'#ffd166'},
+  'REGULAR':          {bg:'rgba(255,122,0,.15)',border:'rgba(255,122,0,.5)',color:'#ff7a00'},
+  'PRECISA MELHORAR': {bg:'rgba(255,63,108,.15)',border:'rgba(255,63,108,.5)',color:'#ff3f6c'},
+};
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+// ── Direct API call (web version) ────────────────────────────────────────────
+async function callAPI(key, payload) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+async function boot() {
+  try {
+    const saved = localStorage.getItem('vl_api_key');
+    if (saved) { apiKey = saved; showApp(); }
+    else showOnboarding();
+  } catch { showOnboarding(); }
+}
+
+function showOnboarding() {
+  document.getElementById('screen-onboarding').classList.remove('hidden');
+  document.getElementById('screen-app').classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('screen-onboarding').classList.add('hidden');
+  document.getElementById('screen-app').classList.remove('hidden');
+  if (apiKey) document.getElementById('keyBadge').textContent = '🔑 ' + apiKey.slice(0,10) + '••••' + apiKey.slice(-4);
+}
+
+// ── Onboarding ────────────────────────────────────────────────────────────────
+function toggleKey() {
+  const inp = document.getElementById('apiKeyInput');
+  const btn = document.getElementById('keyToggle');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+async function handleStart() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const err = document.getElementById('onbErr');
+  const btn = document.getElementById('btnStart');
+  err.style.display = 'none';
+  if (!key) { err.textContent = 'Cole sua chave da API acima.'; err.style.display = 'block'; return; }
+  if (!key.startsWith('sk-ant-')) { err.textContent = 'Chave inválida. Deve começar com sk-ant-...'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.innerHTML = '<span>⏳</span><span>Validando...</span>';
+  try {
+    const res = await callAPI(key, {model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'ping'}]});
+    if (res.error) throw new Error(res.error.message);
+    localStorage.setItem('vl_api_key', key);
+    apiKey = key; showApp();
+  } catch {
+    btn.disabled = false; btn.innerHTML = '<span>⚡</span><span>Começar a usar o ViralLab</span>';
+    err.textContent = 'Chave inválida ou sem créditos. Verifique em console.anthropic.com';
+    err.style.display = 'block';
+  }
+}
+
+function handleSignout() {
+  localStorage.removeItem('vl_api_key');
+  apiKey = null; document.getElementById('apiKeyInput').value = '';
+  showOnboarding();
+}
+
+// ── Pills ─────────────────────────────────────────────────────────────────────
+function selectPill(type, value, el) {
+  const group = type === 'platform' ? 'platformGroup' : 'objectiveGroup';
+  document.getElementById(group).querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  if (type === 'platform') platform = value;
+  else objective = value;
+}
+
+// ── Thumbnail ─────────────────────────────────────────────────────────────────
+function handleThumb(e) { processFile(e.target.files[0]); }
+function handleDrop(e) { e.preventDefault(); processFile(e.dataTransfer.files[0]); }
+function processFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    thumbBase64 = e.target.result.split(',')[1];
+    document.getElementById('thumbPreview').src = e.target.result;
+    document.getElementById('thumbBox').classList.add('has-img');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Analyze ───────────────────────────────────────────────────────────────────
+async function analyze() {
+  const title = document.getElementById('fTitle').value.trim();
+  const niche = document.getElementById('fNiche').value.trim();
+  const script = document.getElementById('fScript').value.trim();
+  const err = document.getElementById('formErr');
+  err.style.display = 'none';
+  if (!title || !niche || !script) { err.textContent = 'Preencha pelo menos o título, nicho e roteiro.'; err.style.display = 'block'; return; }
+
+  document.getElementById('formCard').style.display = 'none';
+  document.getElementById('loadingWrap').classList.add('active');
+  document.getElementById('resultsWrap').classList.remove('active');
+
+  let msgIdx = 0;
+  const msgEl = document.getElementById('loadingMsg');
+  loadingTimer = setInterval(() => { msgIdx=(msgIdx+1)%LOADING_MSGS.length; msgEl.textContent=LOADING_MSGS[msgIdx]; }, 1800);
+
+  const audience  = document.getElementById('fAudience').value;
+  const size      = document.getElementById('fSize').value;
+  const duration  = document.getElementById('fDuration').value;
+  const type      = document.getElementById('fType').value;
+
+  const userContent = [];
+  if (thumbBase64) userContent.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:thumbBase64}});
+  userContent.push({type:'text', text: buildPrompt({title,niche,audience,size,duration,type,script})});
+
+  try {
+    const data = await callAPI(apiKey, {
+      model:'claude-sonnet-4-20250514', max_tokens:4000,
+      messages:[{role:'user',content:userContent}]
+    });
+    clearInterval(loadingTimer);
+    if (data.error) throw new Error(data.error.message);
+    const raw = data.content.map(b=>b.text||'').join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); }
+    catch {
+      const m = clean.match(/\{[\s\S]*/);
+      if (m) { let a=m[0]; let o=(a.match(/\{/g)||[]).length-(a.match(/\}/g)||[]).length; for(let j=0;j<o;j++) a+='}'; parsed=JSON.parse(a); }
+      else throw new Error('Resposta inválida. Tente novamente.');
+    }
+    document.getElementById('loadingWrap').classList.remove('active');
+    document.getElementById('resultsWrap').classList.add('active');
+    renderResults(parsed);
+  } catch(e) {
+    clearInterval(loadingTimer);
+    document.getElementById('loadingWrap').classList.remove('active');
+    document.getElementById('formCard').style.display = 'block';
+    err.textContent = 'Erro: ' + e.message; err.style.display = 'block';
+  }
+}
+
+function buildPrompt({title,niche,audience,size,duration,type,script}) {
+  return `Você é um especialista sênior em criação de conteúdo viral. Analise os dados abaixo e seja RIGOROSO — notas altas só para conteúdo realmente bom. Retorne APENAS JSON válido sem markdown.
+
+DADOS:
+Título: ${title}
+Nicho: ${niche}
+Público: ${audience||'Não informado'}
+Plataforma: ${platform||'Não informada'}
+Objetivo: ${objective||'Não informado'}
+Tamanho do canal: ${size||'Não informado'}
+Duração: ${duration||'Não informada'}
+Tipo: ${type||'Não informado'}
+Roteiro: ${script}
+Thumbnail: ${thumbBase64?'Imagem enviada acima':'Não enviada'}
+
+REGRAS:
+- Título sem PPP = máx 5/10. Genérico ou vago = 3-4
+- Sem gancho no roteiro = máx 5 em gancho e retenção
+- viral_score = média ponderada real dos sub-scores
+- Sugestões de título DEVEM ser sobre o tema exato com método PPP
+- Dicas de roteiro DEVEM ter exemplos concretos para ESTE vídeo
+- Tudo deve ser específico para o nicho e plataforma informados
+
+{"viral_score":<0-100>,"verdict":"<EXPLOSIVO|MUITO BOM|BOM|REGULAR|PRECISA MELHORAR>","sub_scores":{"titulo":<0-10>,"gancho":<0-10>,"retencao":<0-10>,"thumbnail":<0-10 ou null>,"seo":<0-10>},"strengths":["<ponto forte real>","<ponto forte 2>"],"weaknesses":["<fraqueza detalhada>","<fraqueza 2>","<fraqueza 3>"],"title_suggestions":["<PPP com número e prazo no tema exato>","<curiosidade ou polêmica no mesmo tema>","<emocional ou prova social no mesmo tema>"],"title_analysis":"<análise de 4-5 frases: o que está errado, o que falta, como cada sugestão corrige>","script_tips":["<dica do gancho 0-10s com exemplo de frase concreta para ESTE vídeo>","<dica de estrutura específica com número de blocos e ordem>","<dica de CTA e retenção para o objetivo e plataforma informados>"],"thumbnail_feedback":"<análise visual ou orientação específica com elementos concretos>","competition_analysis":"<3-4 frases: volume de concorrência, o que os melhores fazem, ângulo diferenciador>","best_schedule":{"days":"<melhores dias>","time":"<melhor horário>","frequency":"<frequência recomendada>","reason":"<por que esses horários funcionam>"},"description":"<descrição completa pronta para copiar com gancho, palavras-chave, CTA e hashtags>","tags":["<tag1>","<tag2>","<tag3>","<tag4>","<tag5>","<tag6>","<tag7>","<tag8>","<tag9>","<tag10>"],"viral_insights":["<insight de tendência atual deste nicho>","<insight do algoritmo desta plataforma>","<insight avançado sobre o público-alvo>"]}`;
+}
+
+// ── Render Results ────────────────────────────────────────────────────────────
+function renderResults(r) {
+  const score = r.viral_score||0;
+  const color = score>=80?'#06d6a0':score>=60?'#ffd166':score>=40?'#ff7a00':'#ff3f6c';
+  const arc = document.getElementById('scoreArc');
+  arc.style.stroke = color;
+  setTimeout(()=>{ arc.style.strokeDashoffset = 339-(score/100)*339; }, 100);
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('scoreVal').style.color = color;
+
+  const vc = VERDICT_STYLES[r.verdict]||VERDICT_STYLES['REGULAR'];
+  const vEl = document.getElementById('verdictEl');
+  vEl.textContent = r.verdict;
+  Object.assign(vEl.style, {background:vc.bg, border:`1px solid ${vc.border}`, color:vc.color,
+    display:'inline-block', padding:'6px 16px', borderRadius:'999px',
+    fontFamily:"'Syne',sans-serif", fontSize:'12px', fontWeight:'700', letterSpacing:'.05em', marginTop:'8px'});
+
+  // Sub scores
+  const subsWrap = document.getElementById('subsWrap');
+  subsWrap.innerHTML = '';
+  Object.entries(r.sub_scores||{}).filter(([,v])=>v!==null).forEach(([k,v])=>{
+    subsWrap.insertAdjacentHTML('beforeend',`
+      <div class="sub-item">
+        <span class="sub-lbl">${SUB_LABELS[k]||k}</span>
+        <div class="sub-bar"><div class="sub-fill" data-w="${(v/10)*100}%" style="background:${SUB_COLORS[k]}"></div></div>
+        <span class="sub-num" style="color:${SUB_COLORS[k]}">${v}</span>
+      </div>`);
+  });
+  setTimeout(()=>{ document.querySelectorAll('.sub-fill').forEach(el=>el.style.width=el.dataset.w); }, 200);
+
+  // Cards
+  const cards = document.getElementById('cardsWrap');
+  cards.innerHTML = '';
+  const add = (icon,title,tc,lc,full,html) => {
+    cards.insertAdjacentHTML('beforeend',`
+      <div class="rcard${full?' rcard-full':''}">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,${lc},transparent)"></div>
+        <div class="rcard-icon">${icon}</div>
+        <h3 style="color:${tc}">${title}</h3>
+        <div class="rcard-content">${html}</div>
+      </div>`);
+  };
+  const list = (items,c) => `<ul class="rcard-list">${(items||[]).map(i=>`<li class="rcard-li"><span class="rcard-arrow" style="color:${c}">→</span><span>${i}</span></li>`).join('')}</ul>`;
+
+  add('✅','Pontos Fortes','#06d6a0','#06d6a0',false, list(r.strengths,'#06d6a0'));
+  add('⚠️','Pontos Fracos','#ff6b6b','#ff6b6b',false, list(r.weaknesses,'#ff6b6b'));
+  add('✏️','Sugestões de Título — Método PPP','#ffd166','#ffd166',true,
+    (r.title_suggestions||[]).map((t,i)=>`<div class="title-opt"><span class="title-opt-lbl">Opção ${i+1}</span><span class="title-opt-txt">${t}</span></div>`).join('')+
+    `<div class="title-ana">${r.title_analysis||''}</div>`);
+  add('🎬','Dicas de Roteiro','#ff7a00','#ff7a00',true, list(r.script_tips,'#ff7a00'));
+  add('🖼️','Análise de Thumbnail','#ff3f6c','#ff3f6c',false,`<p style="font-size:12px;line-height:1.7">${r.thumbnail_feedback||''}</p>`);
+  add('⚔️','Análise de Concorrência','#00b4d8','#00b4d8',false,`<p style="font-size:12px;line-height:1.7">${r.competition_analysis||''}</p>`);
+
+  if (r.best_schedule) {
+    const s = r.best_schedule;
+    add('📅','Melhor Horário para Publicar','#06d6a0','#06d6a0',true,`
+      <div class="schedule">
+        <div class="sch-item"><div class="sch-val">${s.days}</div><div class="sch-lbl">Melhores dias</div></div>
+        <div class="sch-item"><div class="sch-val">${s.time}</div><div class="sch-lbl">Melhor horário</div></div>
+        <div class="sch-item"><div class="sch-val">${s.frequency}</div><div class="sch-lbl">Frequência ideal</div></div>
+        <div class="sch-reason">${s.reason}</div>
+      </div>`);
+  }
+  if (r.description) add('📝','Descrição Pronta para Copiar','#a78bfa','#a78bfa',true,`<div class="desc-box">${r.description}</div>`);
+  if (r.tags?.length) add('🏷️','Tags Recomendadas','#ffd166','#ffd166',true,`<div class="tags-wrap">${r.tags.map(t=>`<span class="tag">#${t}</span>`).join('')}</div>`);
+  add('🚀','Insights Virais','#a78bfa','#a78bfa',true, list(r.viral_insights,'#a78bfa'));
+}
+
+function resetApp() {
+  document.getElementById('resultsWrap').classList.remove('active');
+  document.getElementById('formCard').style.display = 'block';
+  thumbBase64=null; platform=''; objective='';
+  document.getElementById('thumbBox').classList.remove('has-img');
+  document.getElementById('thumbFile').value='';
+  document.getElementById('formErr').style.display='none';
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+}
+
+boot();
+</script>
+</body>
+</html>
